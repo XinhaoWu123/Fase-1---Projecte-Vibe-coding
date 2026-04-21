@@ -79,6 +79,8 @@ Les entitats principals del joc són:
 
 El diagrama de classes representa l’estructura del joc.
 
+![Diagrama de classes](diagramas/diagrama_classes.png)
+
 - La classe **Joc** és la principal i conté totes les altres entitats.  
 - El **Jugador** i els **Enemics** interactuen entre si mitjançant col·lisions.  
 - Els **Blocs** defineixen el terreny i elements del mapa.  
@@ -90,6 +92,8 @@ Aquest disseny permet separar responsabilitats i facilitar la implementació.
 ## Explicació del diagrama de comportament
 
 El diagrama de comportament representa el bucle de joc.
+
+![Diagrama de comportament](diagramas/Diagrama de comportament.png)
 
 ### Flux:
 1. Llegir input  
@@ -130,9 +134,9 @@ Aquest flux reflecteix exactament el funcionament del joc en temps real.
 │ │── Enemy.js
 │ │── Block.js
 │── /assets
-│── /diagrames
-│ │── diagrama_classes.png
-│ │── diagrama_comportament.png
+│── /diagramas
+│ │── diagrama de classes.png
+│ │── Diagrama de comportament.png
 │── README.md
 
 
@@ -161,4 +165,4 @@ Aquest flux reflecteix exactament el funcionament del joc en temps real.
 - ✔ Preparat per implementar  
 - ✔ Classes útils (no decoratives)  
 - ✔ Bucle reflectit  
-- ✔ Estructura realista
+- ✔ Estructura realista 
