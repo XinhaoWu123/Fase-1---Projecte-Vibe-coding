@@ -93,7 +93,7 @@ Aquest disseny permet separar responsabilitats i facilitar la implementació.
 
 El diagrama de comportament representa el bucle de joc.
 
-![Diagrama de comportament](diagramas/Diagrama de comportament.png)
+![Diagrama de comportament](diagramas/diagrama_comportament.png)
 
 ### Flux:
 1. Llegir input  
