@@ -65,4 +65,4 @@ S’ha utilitzat **Visual Studio Code** com a entorn de desenvolupament principa
 
 Fitxer principal:
 
-`mario_platformer_game.html`
+[Fitxer principal del joc](mario/mario_platformer_game.html)
