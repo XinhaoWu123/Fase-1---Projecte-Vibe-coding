@@ -52,4 +52,6 @@ A continuació s'enumeren **5 millores identificades** durant la revisió del co
 ```javascript
 if (p.x - camera.x < -20 || p.x - camera.x > W + 20)
     continue;
+
+Fitxer del joc:
 [Fitxer principal del joc](mario/mario_platformer_game.html)
