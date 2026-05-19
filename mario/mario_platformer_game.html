@@ -1,36 +1,92 @@
-
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plataformes v3 – Millorat</title>
 <style>
-  #gameContainer { position: relative; width: 100%; max-width: 800px; margin: 0 auto; font-family: var(--font-mono); }
-  #gameCanvas { display: block; width: 100%; border-radius: 8px; border: 2px solid var(--color-border-primary); cursor: pointer; }
-  #ui { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--color-background-secondary); border-radius: var(--border-radius-md); margin-bottom: 8px; font-size: 13px; color: var(--color-text-primary); }
+  body { margin: 0; background: #1a1a2e; display: flex; justify-content: center; align-items: flex-start; padding: 16px; font-family: monospace; }
+  #gc { position: relative; width: 100%; max-width: 820px; }
+  #gameCanvas { display: block; width: 100%; border-radius: 8px; border: 2px solid #444; cursor: pointer; }
+  #ui {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 12px; background: #16213e; border-radius: 8px;
+    margin-bottom: 8px; font-size: 13px; color: #eee; flex-wrap: wrap; gap: 6px;
+  }
+  /* ─── Barra de temps (M2) ─────────────────────── */
+  #timerWrap { display: flex; align-items: center; gap: 6px; }
+  #timerBarWrap {
+    display: inline-block; vertical-align: middle;
+    width: 70px; height: 10px; background: #333;
+    border-radius: 5px; overflow: hidden;
+  }
+  #timerBar {
+    display: block; height: 100%; width: 100%;
+    background: #4caf50; border-radius: 5px;
+    transition: width 0.6s linear, background 0.6s linear;
+  }
   #controls { display: flex; gap: 8px; justify-content: center; margin-top: 8px; flex-wrap: wrap; }
-  .ctrl-btn { padding: 8px 16px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-primary); font-size: 13px; cursor: pointer; user-select: none; -webkit-user-select: none; }
-  .ctrl-btn:active { transform: scale(0.97); background: var(--color-background-secondary); }
-  #overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.75); border-radius: 8px; color: #fff; text-align: center; }
-  #overlay h2 { font-size: 28px; margin: 0 0 8px; font-weight: 500; }
-  #overlay p { font-size: 14px; margin: 0 0 16px; opacity: 0.8; }
-  #overlay button { padding: 10px 28px; background: #e8a020; border: none; border-radius: 6px; color: #fff; font-size: 15px; font-weight: 500; cursor: pointer; }
+  .cb {
+    padding: 10px 20px; border: 1px solid #555; border-radius: 8px;
+    background: #222; color: #eee; font-size: 14px; cursor: pointer;
+    user-select: none; -webkit-user-select: none; touch-action: manipulation;
+  }
+  .cb:active { transform: scale(0.97); background: #333; }
+  #overlay {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 40px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.85); border-radius: 8px; color: #fff;
+    text-align: center; padding: 20px;
+  }
+  #overlay h2 { font-size: 26px; margin: 0 0 8px; font-weight: 500; }
+  #overlay p  { font-size: 13px; margin: 0 0 12px; opacity: 0.85; line-height: 1.6; }
+  #overlay button {
+    padding: 10px 28px; background: #e8a020; border: none;
+    border-radius: 6px; color: #fff; font-size: 15px; font-weight: 500; cursor: pointer;
+  }
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 6px; font-size: 11px; color: #aaa; }
+  .legend span { display: flex; align-items: center; gap: 4px; }
+  .dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  /* Overlay de pausa (M1) */
+  #pauseHint { font-size:11px; color:#888; text-align:center; margin-top:4px; }
 </style>
-
-<div id="gameContainer">
+</head>
+<body>
+<div id="gc">
   <div id="ui">
     <span>❤️ <span id="lives">3</span></span>
     <span>⭐ <span id="score">0</span></span>
-    <span>⏱ <span id="timer">60</span>s</span>
+    <!-- M2: barra de temps -->
+    <span id="timerWrap">
+      ⏱ <span id="timer">130</span>s
+      <span id="timerBarWrap"><span id="timerBar"></span></span>
+    </span>
+    <span>👾 <span id="ekills">0</span></span>
   </div>
   <div style="position:relative">
-    <canvas id="gameCanvas" width="800" height="380"></canvas>
+    <canvas id="gameCanvas" width="820" height="390"></canvas>
     <div id="overlay">
-      <h2>🍄 Plataformes</h2>
-      <p>Arriba a la bandera! Salta sobre els enemics per eliminar-los.<br>A/D o ←/→ per moure's · W/↑/Espai per saltar</p>
+      <h2>🍄 Plataformes v3</h2>
+      <p>Arriba a la bandera! Salta sobre els enemics per eliminar-los.<br>
+      <strong>Nou:</strong> Salt mes alt! Forats mes grans, 3 tipus d'enemics.<br><br>
+      A/D o ←/→ per moure · W/↑/Espai per saltar · <strong>P per pausar</strong></p>
+      <div class="legend">
+        <span><span class="dot" style="background:#8B4513"></span>Goomba (normal)</span>
+        <span><span class="dot" style="background:#4444cc"></span>Koopa (ràpid)</span>
+        <span><span class="dot" style="background:#cc4444"></span>Spiny (botat, no morir saltant)</span>
+      </div>
+      <br>
       <button onclick="startGame()">Jugar!</button>
     </div>
   </div>
+  <!-- M1: botó de pausa als controls mòbils -->
   <div id="controls">
-    <button class="ctrl-btn" id="btnLeft" onpointerdown="keys.left=true" onpointerup="keys.left=false">◀</button>
-    <button class="ctrl-btn" id="btnJump" onpointerdown="keys.jump=true;keys.jumpPressed=true" onpointerup="keys.jump=false">▲ Salt</button>
-    <button class="ctrl-btn" id="btnRight" onpointerdown="keys.right=true" onpointerup="keys.right=false">▶</button>
+    <button class="cb" onpointerdown="keys.left=true" onpointerup="keys.left=false" onpointercancel="keys.left=false">◀</button>
+    <button class="cb" onpointerdown="keys.jump=true;keys.jumpPressed=true" onpointerup="keys.jump=false" onpointercancel="keys.jump=false">▲ Salt</button>
+    <button class="cb" onpointerdown="keys.right=true" onpointerup="keys.right=false" onpointercancel="keys.right=false">▶</button>
+    <button class="cb" onclick="togglePause()" id="btnPause">⏸ Pausa</button>
   </div>
+  <p id="pauseHint">Tecla P per pausar · Tecles WASD o fletxes per moure</p>
 </div>
 
 <script>
@@ -38,172 +94,315 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height;
 
+// ─── ESTATS DEL JOC ──────────────────────────────────────────────────────────
+// 'menu'    → pantalla inicial
+// 'playing' → partida en curs
+// 'paused'  → partida pausada (loop i timer aturats)  [M1]
+// 'won'     → jugador ha arribat a la bandera
+// 'lost'    → vides esgotades o temps exhaurit
 let gameState = 'menu', raf, timerInterval;
+
 const keys = { left: false, right: false, jump: false, jumpPressed: false };
 
 window.addEventListener('keydown', e => {
-  if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys.left = true;
+  if (e.code === 'KeyA' || e.code === 'ArrowLeft')  keys.left  = true;
   if (e.code === 'KeyD' || e.code === 'ArrowRight') keys.right = true;
-  if ((e.code === 'KeyW' || e.code === 'ArrowUp' || e.code === 'Space') && !keys.jump) { keys.jump = true; keys.jumpPressed = true; }
-  e.code === 'Space' && e.preventDefault();
+  if ((e.code === 'KeyW' || e.code === 'ArrowUp' || e.code === 'Space') && !keys.jump) {
+    keys.jump = true; keys.jumpPressed = true;
+  }
+  if (e.code === 'Space') e.preventDefault();
+  // M1: tecla P per pausar/reprendre
+  if (e.code === 'KeyP') togglePause();
 });
 window.addEventListener('keyup', e => {
-  if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys.left = false;
+  if (e.code === 'KeyA' || e.code === 'ArrowLeft')  keys.left  = false;
   if (e.code === 'KeyD' || e.code === 'ArrowRight') keys.right = false;
   if (e.code === 'KeyW' || e.code === 'ArrowUp' || e.code === 'Space') keys.jump = false;
 });
 
-const GRAVITY = 0.5, JUMP = -11, SPEED = 3.5;
-const LEVEL_W = 3200;
+// ─── CONSTANTS DE FÍSICA ─────────────────────────────────────────────────────
+const GRAVITY = 0.45;   // Acceleració gravitatoria per frame (píxels/frame²)
+const JUMP    = -13.0;  // Velocitat inicial del salt (negatiu = amunt)
+const SPEED   =  3.5;   // Velocitat horitzontal màxima del jugador
+const LEVEL_W = 5000;
+const MAX_TIME = 130;   // Temps màxim de la partida (per calcular la barra) [M2]
 
-let player, enemies, platforms, coins, goal, camera, score, lives, timeLeft, particles;
+let player, enemies, platforms, coins, goal, camera, score, lives, timeLeft, particles, ekills;
 
+// ─── DADES DEL NIVELL ────────────────────────────────────────────────────────
 const platformData = [
-  {x:0,y:330,w:400,h:50,c:'#4a8c3f'},
-  {x:450,y:330,w:300,h:50,c:'#4a8c3f'},
-  {x:400,y:260,w:80,h:20,c:'#b87333'},
-  {x:550,y:220,w:100,h:20,c:'#b87333'},
-  {x:800,y:330,w:500,h:50,c:'#4a8c3f'},
-  {x:700,y:240,w:80,h:20,c:'#b87333'},
-  {x:820,y:180,w:80,h:20,c:'#b87333'},
-  {x:960,y:240,w:80,h:20,c:'#b87333'},
-  {x:1100,y:220,w:120,h:20,c:'#b87333'},
-  {x:1350,y:330,w:500,h:50,c:'#4a8c3f'},
-  {x:1280,y:240,w:60,h:20,c:'#b87333'},
-  {x:1420,y:180,w:80,h:20,c:'#b87333'},
-  {x:1560,y:240,w:80,h:20,c:'#b87333'},
-  {x:1700,y:300,w:80,h:20,c:'#b87333'},
-  {x:1900,y:330,w:600,h:50,c:'#4a8c3f'},
-  {x:1860,y:240,w:80,h:20,c:'#b87333'},
-  {x:2020,y:180,w:80,h:20,c:'#b87333'},
-  {x:2200,y:330,w:700,h:50,c:'#4a8c3f'},
-  {x:2180,y:240,w:80,h:20,c:'#b87333'},
-  {x:2350,y:200,w:80,h:20,c:'#b87333'},
-  {x:2500,y:260,w:80,h:20,c:'#b87333'},
-  {x:2600,y:180,w:80,h:20,c:'#b87333'},
-  {x:2950,y:330,w:300,h:50,c:'#4a8c3f'},
+  {x:0,    y:340, w:420, h:50, c:'#4a8c3f'},
+  {x:580,  y:340, w:280, h:50, c:'#4a8c3f'},
+  {x:460,  y:265, w:80,  h:20, c:'#b87333'},
+  {x:600,  y:210, w:100, h:20, c:'#b87333'},
+  {x:980,  y:340, w:380, h:50, c:'#4a8c3f'},
+  {x:850,  y:255, w:80,  h:20, c:'#b87333'},
+  {x:990,  y:185, w:80,  h:20, c:'#b87333'},
+  {x:1120, y:255, w:80,  h:20, c:'#b87333'},
+  {x:1230, y:200, w:130, h:20, c:'#b87333'},
+  {x:1500, y:340, w:420, h:50, c:'#4a8c3f'},
+  {x:1360, y:260, w:65,  h:20, c:'#b87333'},
+  {x:1490, y:190, w:90,  h:20, c:'#b87333'},
+  {x:1630, y:255, w:90,  h:20, c:'#b87333'},
+  {x:1770, y:310, w:90,  h:20, c:'#b87333'},
+  {x:2060, y:340, w:500, h:50, c:'#4a8c3f'},
+  {x:2020, y:255, w:80,  h:20, c:'#b87333'},
+  {x:2160, y:185, w:90,  h:20, c:'#b87333'},
+  {x:2290, y:255, w:90,  h:20, c:'#b87333'},
+  {x:2700, y:340, w:160, h:50, c:'#4a8c3f'},
+  {x:2920, y:340, w:180, h:50, c:'#4a8c3f'},
+  {x:3160, y:340, w:560, h:50, c:'#4a8c3f'},
+  {x:3130, y:255, w:80,  h:20, c:'#b87333'},
+  {x:3280, y:195, w:90,  h:20, c:'#b87333'},
+  {x:3430, y:265, w:90,  h:20, c:'#b87333'},
+  {x:3580, y:190, w:90,  h:20, c:'#b87333'},
+  {x:3780, y:340, w:650, h:50, c:'#4a8c3f'},
+  {x:3760, y:255, w:90,  h:20, c:'#b87333'},
+  {x:3920, y:185, w:90,  h:20, c:'#b87333'},
+  {x:4080, y:260, w:90,  h:20, c:'#b87333'},
+  {x:4230, y:190, w:90,  h:20, c:'#b87333'},
+  {x:4500, y:340, w:560, h:50, c:'#4a8c3f'},
+  {x:4480, y:255, w:80,  h:20, c:'#b87333'},
+  {x:4620, y:190, w:90,  h:20, c:'#b87333'},
+  {x:4760, y:260, w:90,  h:20, c:'#b87333'},
 ];
 
+// ─── TIPUS D'ENEMICS ─────────────────────────────────────────────────────────
+// 'goomba' → velocitat normal (1.2), es pot eliminar saltant        (+100 pts)
+// 'koopa'  → velocitat ràpida (2.2), es pot eliminar saltant        (+150 pts)
+// 'spiny'  → velocitat lenta (1.0),  NO es pot eliminar saltant (punxes!)
 const enemyData = [
-  {x:500,y:305},{x:870,y:305},{x:1000,y:305},{x:1400,y:305},{x:1600,y:305},
-  {x:1950,y:305},{x:2100,y:305},{x:2250,y:305},{x:2700,y:305},
-  {x:730,y:215},{x:830,y:155},{x:1150,y:195},{x:1440,y:155},{x:2060,y:155}
+  {x:100, y:315, type:'goomba'},{x:200, y:315, type:'koopa'},
+  {x:610, y:315, type:'goomba'},{x:700, y:315, type:'spiny'},
+  {x:470, y:240, type:'goomba'},{x:630, y:185, type:'koopa'},
+  {x:1010, y:315, type:'goomba'},{x:1100, y:315, type:'koopa'},{x:1200, y:315, type:'spiny'},
+  {x:870, y:230, type:'goomba'},{x:1010, y:160, type:'koopa'},{x:1260, y:175, type:'goomba'},
+  {x:1530, y:315, type:'spiny'},{x:1620, y:315, type:'goomba'},{x:1710, y:315, type:'koopa'},
+  {x:1510, y:165, type:'goomba'},{x:1660, y:230, type:'spiny'},
+  {x:2080, y:315, type:'goomba'},{x:2170, y:315, type:'koopa'},{x:2280, y:315, type:'spiny'},
+  {x:2170, y:160, type:'koopa'},{x:2310, y:230, type:'goomba'},
+  {x:2710, y:315, type:'spiny'},{x:2940, y:315, type:'koopa'},
+  {x:3180, y:315, type:'goomba'},{x:3290, y:315, type:'koopa'},{x:3400, y:315, type:'spiny'},{x:3510, y:315, type:'goomba'},
+  {x:3300, y:170, type:'koopa'},{x:3460, y:240, type:'spiny'},
+  {x:3800, y:315, type:'goomba'},{x:3920, y:315, type:'koopa'},{x:4050, y:315, type:'spiny'},{x:4170, y:315, type:'goomba'},
+  {x:3940, y:160, type:'koopa'},{x:4100, y:235, type:'spiny'},
+  {x:4520, y:315, type:'goomba'},{x:4610, y:315, type:'koopa'},{x:4700, y:315, type:'spiny'},{x:4800, y:315, type:'goomba'},
+  {x:4640, y:165, type:'koopa'},{x:4780, y:235, type:'spiny'},
 ];
 
 const coinData = [
-  {x:420,y:230},{x:570,y:190},{x:720,y:210},{x:840,y:150},{x:990,y:210},
-  {x:1130,y:190},{x:1300,y:210},{x:1440,y:150},{x:1580,y:210},{x:1720,y:270},
-  {x:1880,y:210},{x:2040,y:150},{x:2200,y:210},{x:2370,y:170},{x:2520,y:230},
-  {x:2620,y:150},{x:2980,y:300},{x:3000,y:300},{x:3020,y:300}
+  {x:490,y:235},{x:620,y:185},{x:660,y:185},
+  {x:870,y:225},{x:1000,y:160},{x:1140,y:225},{x:1270,y:175},
+  {x:1380,y:230},{x:1510,y:162},{x:1650,y:228},{x:1790,y:283},
+  {x:2040,y:225},{x:2175,y:158},{x:2305,y:228},
+  {x:2710,y:308},{x:2940,y:308},
+  {x:3150,y:225},{x:3300,y:168},{x:3450,y:238},{x:3600,y:162},
+  {x:3780,y:225},{x:3940,y:158},{x:4098,y:233},{x:4248,y:163},
+  {x:4520,y:225},{x:4640,y:160},{x:4780,y:230},
+  {x:4820,y:308},{x:4870,y:308},{x:4920,y:308},
 ];
 
+// ─── INICIALITZACIÓ ───────────────────────────────────────────────────────────
 function initGame() {
-  player = { x: 80, y: 260, w: 28, h: 36, vx: 0, vy: 0, onGround: false, dir: 1, jumpHeld: false };
-  camera = { x: 0 };
-  score = 0; lives = 3; timeLeft = 90;
-  document.getElementById('score').textContent = 0;
-  document.getElementById('lives').textContent = 3;
-  document.getElementById('timer').textContent = 90;
+  player = { x:60, y:280, w:28, h:36, vx:0, vy:0, onGround:false, dir:1, jumpHeld:false };
+  camera = { x:0 };
+  score = 0; lives = 3; timeLeft = MAX_TIME; ekills = 0;
+  ['score','lives','timer','ekills'].forEach(id =>
+    document.getElementById(id).textContent = ({score:0,lives:3,timer:MAX_TIME,ekills:0})[id]
+  );
+  updateTimerBar(); // M2: reseteja la barra al 100%
   particles = [];
-
   platforms = platformData.map(p => ({...p}));
-  enemies = enemyData.map(e => ({x:e.x, y:e.y, w:30, h:28, vx:1.2, alive:true, onGround:false}));
-  coins = coinData.map(c => ({x:c.x, y:c.y, r:8, collected:false, anim:Math.random()*Math.PI*2}));
-  goal = { x: LEVEL_W - 80, y: 140, w: 30, h: 190 };
+  enemies = enemyData.map(e => {
+    let patrolMin = e.x - 60, patrolMax = e.x + 60;
+    for (let p of platforms) {
+      let footY = e.y + 28;
+      if (footY >= p.y && footY <= p.y + p.h + 8 && e.x >= p.x - 5 && e.x + 30 <= p.x + p.w + 5) {
+        patrolMin = p.x + 4; patrolMax = p.x + p.w - 34; break;
+      }
+    }
+    const speeds = { goomba: 1.2, koopa: 2.2, spiny: 1.0 };
+    return { x:e.x, y:e.y, w:30, h:28, vx: speeds[e.type]||1.2, alive:true, onGround:false, vy:0, patrolMin, patrolMax, type: e.type };
+  });
+  coins = coinData.map(c => ({ x:c.x, y:c.y, r:8, collected:false, anim:Math.random()*Math.PI*2 }));
+  goal = { x:LEVEL_W - 110, y:150, w:30, h:190 };
 }
 
-function startGame() {
-  document.getElementById('overlay').style.display = 'none';
-  initGame();
-  gameState = 'playing';
+// ─── M1: SISTEMA DE PAUSA ─────────────────────────────────────────────────────
+function togglePause() {
+  if (gameState === 'playing') {
+    gameState = 'paused';
+    clearInterval(timerInterval);
+    cancelAnimationFrame(raf);
+    drawPauseOverlay();
+    document.getElementById('btnPause').textContent = '▶ Continua';
+  } else if (gameState === 'paused') {
+    gameState = 'playing';
+    startTimer();
+    loop();
+    document.getElementById('btnPause').textContent = '⏸ Pausa';
+  }
+}
+
+function drawPauseOverlay() {
+  // Dibuixar sobre l'estat actual del canvas (no esborrem)
+  ctx.fillStyle = 'rgba(0,0,0,0.62)';
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#facc15';
+  ctx.font = 'bold 38px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('⏸  PAUSA', W / 2, H / 2 - 14);
+  ctx.fillStyle = '#ccc';
+  ctx.font = '15px monospace';
+  ctx.fillText('Prem P o el botó "Continua" per reprendre', W / 2, H / 2 + 22);
+  ctx.textAlign = 'left';
+}
+
+// ─── M2: BARRA DE TEMPS ───────────────────────────────────────────────────────
+function updateTimerBar() {
+  const pct = Math.max(0, timeLeft / MAX_TIME) * 100;
+  const bar = document.getElementById('timerBar');
+  bar.style.width = pct + '%';
+  if (pct > 50)      bar.style.background = '#4caf50'; // verd
+  else if (pct > 25) bar.style.background = '#facc15'; // groc
+  else               bar.style.background = '#e24b4a'; // vermell
+}
+
+function startTimer() {
   clearInterval(timerInterval);
   timerInterval = setInterval(() => {
     if (gameState !== 'playing') return;
     timeLeft--;
     document.getElementById('timer').textContent = timeLeft;
+    updateTimerBar(); // M2: actualitza la barra cada segon
     if (timeLeft <= 0) endGame(false);
   }, 1000);
+}
+
+// ─── INICI / FI DE JOC ───────────────────────────────────────────────────────
+function startGame() {
+  document.getElementById('overlay').style.display = 'none';
+  document.getElementById('btnPause').textContent = '⏸ Pausa';
+  initGame();
+  gameState = 'playing';
+  startTimer();
   cancelAnimationFrame(raf);
   loop();
+}
+
+// M3: etiqueta de rendiment per a la pantalla final
+function getPerformanceLabel(s, kills, won) {
+  if (!won) return '💪 Millora la teva estratègia i torna-ho a intentar!';
+  if (s >= 600 && kills >= 10) return '🌟 Perfecte! Ets un crack!';
+  if (s >= 400) return '👍 Molt bona partida!';
+  return '😅 Ho pots fer millor, torna-ho a intentar!';
+}
+
+// M3: animació del comptador de puntuació final
+function animateScore(targetScore, color) {
+  let displayed = 0;
+  const step = Math.max(1, Math.floor(targetScore / 40));
+  const anim = setInterval(() => {
+    displayed = Math.min(displayed + step, targetScore);
+    const el = document.getElementById('scoreAnim');
+    if (el) el.textContent = '⭐ ' + displayed;
+    if (displayed >= targetScore) clearInterval(anim);
+  }, 25);
 }
 
 function endGame(won) {
   gameState = won ? 'won' : 'lost';
   clearInterval(timerInterval);
+  cancelAnimationFrame(raf);
+
   const ov = document.getElementById('overlay');
   ov.style.display = 'flex';
-  ov.innerHTML = won
-    ? `<h2>🏆 Has Guanyat!</h2><p>Puntuació: ${score}</p><button onclick="startGame()">Tornar a jugar</button>`
-    : `<h2>💀 Game Over</h2><p>Puntuació: ${score}</p><button onclick="startGame()">Tornar a jugar</button>`;
+
+  const accent = won ? '#4caf50' : '#e24b4a';
+  const emoji  = won ? '🏆' : '💀';
+  const title  = won ? 'Guanyat!' : 'Game Over';
+  const perf   = getPerformanceLabel(score, ekills, won);
+  const killables = enemyData.filter(e => e.type !== 'spiny').length;
+
+  // M3: puntuació com a element animat + missatge de rendiment
+  ov.innerHTML = `
+    <h2 style="color:${accent};margin:0 0 4px">${emoji} ${title}</h2>
+    <p id="scoreAnim" style="font-size:30px;font-weight:bold;color:${accent};margin:0 0 8px">⭐ 0</p>
+    <p style="margin:0 0 6px">${perf}</p>
+    <p style="font-size:12px;opacity:0.7;margin:0 0 16px">
+      Enemics eliminats: ${ekills} / ${killables}<br>
+      Monedes: ${coins.filter(c=>c.collected).length} / ${coinData.length}<br>
+      Temps restant: ${timeLeft}s
+    </p>
+    <button onclick="startGame()">Tornar a jugar</button>`;
+
+  animateScore(score, accent); // M3: anima el comptador
 }
 
+// ─── PARTÍCULES ───────────────────────────────────────────────────────────────
 function spawnParticles(x, y, color, n) {
-  for (let i = 0; i < n; i++) {
-    particles.push({ x, y, vx: (Math.random()-0.5)*4, vy: -Math.random()*4-1, life: 1, color });
-  }
+  for (let i = 0; i < n; i++)
+    particles.push({ x, y, vx:(Math.random()-0.5)*4, vy:-Math.random()*4-1, life:1, color });
 }
 
+// ─── COL·LISIONS ──────────────────────────────────────────────────────────────
 function aabb(a, b) {
   return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y;
 }
 
+function resolvePlayerPlatforms() {
+  player.onGround = false;
+  for (let p of platforms) {
+    if (player.x+player.w > p.x && player.x < p.x+p.w) {
+      if (player.vy >= 0 && player.y+player.h > p.y && player.y+player.h < p.y+p.h+player.vy+2) {
+        player.y = p.y - player.h; player.vy = 0; player.onGround = true;
+      } else if (player.vy < 0 && player.y < p.y+p.h && player.y > p.y) {
+        player.y = p.y+p.h; player.vy = 0;
+      }
+    }
+    if (player.y+player.h > p.y && player.y < p.y+p.h) {
+      if (player.vx > 0 && player.x+player.w > p.x && player.x < p.x) { player.x = p.x-player.w; player.vx = 0; }
+      if (player.vx < 0 && player.x < p.x+p.w && player.x+player.w > p.x+p.w) { player.x = p.x+p.w; player.vx = 0; }
+    }
+  }
+}
+
+// ─── ACTUALITZACIÓ DEL JUGADOR ────────────────────────────────────────────────
 function updatePlayer() {
-  if (keys.left) { player.vx -= 0.8; player.dir = -1; }
+  if (keys.left)  { player.vx -= 0.8; player.dir = -1; }
   else if (keys.right) { player.vx += 0.8; player.dir = 1; }
   else { player.vx *= 0.7; }
   player.vx = Math.max(-SPEED, Math.min(SPEED, player.vx));
-
   if (keys.jumpPressed && player.onGround) {
-    player.vy = JUMP;
-    player.onGround = false;
-    player.jumpHeld = true;
+    player.vy = JUMP; player.onGround = false; player.jumpHeld = true;
   }
   keys.jumpPressed = false;
   if (!keys.jump) player.jumpHeld = false;
-  if (player.jumpHeld && player.vy < -4) player.vy -= 0.3;
-
+  if (player.jumpHeld && player.vy < -2) player.vy -= 0.3; // boost prolongat
   player.vy += GRAVITY;
   player.vy = Math.min(player.vy, 15);
   player.x += player.vx;
   player.y += player.vy;
-  player.onGround = false;
-
-  for (let p of platforms) {
-    if (player.x+player.w > p.x && player.x < p.x+p.w) {
-      if (player.vy >= 0 && player.y+player.h > p.y && player.y+player.h < p.y+p.h+player.vy+2) {
-        player.y = p.y - player.h;
-        player.vy = 0;
-        player.onGround = true;
-      } else if (player.vy < 0 && player.y < p.y+p.h && player.y > p.y) {
-        player.y = p.y+p.h;
-        player.vy = 0;
-      }
-    }
-    if (player.y+player.h > p.y && player.y < p.y+p.h) {
-      if (player.vx > 0 && player.x+player.w > p.x && player.x < p.x) { player.x = p.x-player.w; player.vx=0; }
-      if (player.vx < 0 && player.x < p.x+p.w && player.x+player.w > p.x+p.w) { player.x = p.x+p.w; player.vx=0; }
-    }
-  }
-
+  resolvePlayerPlatforms();
   if (player.x < 0) player.x = 0;
-  if (player.x + player.w > LEVEL_W) player.x = LEVEL_W - player.w;
-  if (player.y > H + 100) { loseLife(); }
+  if (player.x+player.w > LEVEL_W) player.x = LEVEL_W - player.w;
+  if (player.y > H + 100) loseLife();
 }
 
 function loseLife() {
   lives--;
   document.getElementById('lives').textContent = lives;
-  spawnParticles(player.x + player.w/2, player.y + player.h/2, '#e24b4a', 12);
+  spawnParticles(player.x+player.w/2, player.y+player.h/2, '#e24b4a', 12);
   if (lives <= 0) endGame(false);
-  else { player.x = 80; player.y = 260; player.vx = 0; player.vy = 0; camera.x = 0; }
+  else { player.x = 60; player.y = 280; player.vx = 0; player.vy = 0; camera.x = 0; }
 }
 
+// ─── ACTUALITZACIÓ ENEMICS ────────────────────────────────────────────────────
 function updateEnemies() {
   for (let e of enemies) {
     if (!e.alive) continue;
-    e.vy = (e.vy || 0) + GRAVITY;
-    e.x += e.vx;
-    e.y += e.vy;
+    e.vy = (e.vy||0) + GRAVITY;
+    e.x += e.vx; e.y += e.vy;
     e.onGround = false;
     for (let p of platforms) {
       if (e.x+e.w > p.x && e.x < p.x+p.w) {
@@ -212,32 +411,23 @@ function updateEnemies() {
         }
       }
     }
-    if (e.x < 0 || e.x + e.w > LEVEL_W) e.vx *= -1;
-    let blocked = false;
-    for (let p of platforms) {
-      if (e.onGround && (e.vx > 0 && Math.abs(e.x+e.w - p.x) < 4 || e.vx < 0 && Math.abs(e.x - (p.x+p.w)) < 4)) {
-        if (e.y+e.h >= p.y && e.y < p.y+p.h) { blocked = true; break; }
-      }
-    }
-    if (blocked) e.vx *= -1;
     if (e.onGround) {
-      let onEdge = true;
-      for (let p of platforms) {
-        let checkX = e.vx > 0 ? e.x+e.w+2 : e.x-2;
-        if (checkX > p.x && checkX < p.x+p.w && e.y+e.h >= p.y && e.y+e.h <= p.y+p.h+4) { onEdge = false; break; }
-      }
+      if (e.x <= e.patrolMin) { e.x = e.patrolMin; e.vx = Math.abs(e.vx); }
+      if (e.x + e.w >= e.patrolMax) { e.x = e.patrolMax - e.w; e.vx = -Math.abs(e.vx); }
     }
+    if (e.y > H + 100) { e.alive = false; continue; }
     if (aabb(player, e)) {
-      let pBottom = player.y + player.h, eTop = e.y, pVy = player.vy;
-      if (pBottom - eTop < 18 && pVy > 0) {
-        e.alive = false;
-        player.vy = -7;
-        score += 100;
-        document.getElementById('score').textContent = score;
-        spawnParticles(e.x+e.w/2, e.y+e.h/2, '#facc15', 10);
-      } else {
-        loseLife();
-      }
+      let pBottom = player.y + player.h, eTop = e.y;
+      if (pBottom - eTop < 18 && player.vy > 0) {
+        if (e.type === 'spiny') { loseLife(); }
+        else {
+          e.alive = false; player.vy = -6;
+          score += (e.type === 'koopa') ? 150 : 100; ekills++;
+          document.getElementById('score').textContent = score;
+          document.getElementById('ekills').textContent = ekills;
+          spawnParticles(e.x+e.w/2, e.y+e.h/2, '#facc15', 10);
+        }
+      } else { loseLife(); }
     }
   }
 }
@@ -246,20 +436,16 @@ function updateCoins() {
   for (let c of coins) {
     if (c.collected) continue;
     c.anim += 0.06;
-    let pr = { x: player.x, y: player.y, w: player.w, h: player.h };
-    let cr = { x: c.x - c.r, y: c.y - c.r, w: c.r*2, h: c.r*2 };
-    if (aabb(pr, cr)) {
-      c.collected = true;
-      score += 10;
+    let cr = { x:c.x-c.r, y:c.y-c.r, w:c.r*2, h:c.r*2 };
+    if (aabb(player, cr)) {
+      c.collected = true; score += 10;
       document.getElementById('score').textContent = score;
       spawnParticles(c.x, c.y, '#facc15', 6);
     }
   }
 }
 
-function checkGoal() {
-  if (aabb(player, goal)) endGame(true);
-}
+function checkGoal() { if (aabb(player, goal)) endGame(true); }
 
 function updateCamera() {
   let target = player.x - W * 0.35;
@@ -268,23 +454,17 @@ function updateCamera() {
 }
 
 function updateParticles() {
-  for (let p of particles) {
-    p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.life -= 0.04;
-  }
+  for (let p of particles) { p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.life -= 0.04; }
   particles = particles.filter(p => p.life > 0);
 }
 
-function drawBackground() {
-  const sky = ctx.createLinearGradient(0, 0, 0, H);
-  sky.addColorStop(0, '#87ceeb');
-  sky.addColorStop(1, '#c8e6f5');
-  ctx.fillStyle = sky;
-  ctx.fillRect(0, 0, W, H);
-
-  ctx.fillStyle = 'rgba(255,255,255,0.7)';
-  let clouds = [{x:100,y:50,s:1},{x:350,y:30,s:0.8},{x:600,y:60,s:1.1},{x:750,y:25,s:0.9}];
+// ─── DIBUIX ───────────────────────────────────────────────────────────────────
+function drawBg() {
+  ctx.fillStyle = '#87ceeb'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = 'rgba(255,255,255,0.65)';
+  let clouds = [{x:80,y:45,s:1},{x:310,y:28,s:0.8},{x:560,y:55,s:1.1},{x:730,y:22,s:0.9},{x:920,y:50,s:1}];
   for (let cl of clouds) {
-    let cx = ((cl.x - camera.x * 0.3) % (W+200) + W+200) % (W+200) - 100;
+    let cx = ((cl.x - camera.x * 0.3) % (W+220) + W+220) % (W+220) - 110;
     ctx.save(); ctx.translate(cx, cl.y); ctx.scale(cl.s, cl.s);
     ctx.beginPath(); ctx.arc(0,0,28,0,Math.PI*2); ctx.arc(30,0,22,0,Math.PI*2);
     ctx.arc(-25,0,20,0,Math.PI*2); ctx.arc(10,-18,18,0,Math.PI*2); ctx.fill();
@@ -295,9 +475,8 @@ function drawBackground() {
 function drawPlatforms() {
   for (let p of platforms) {
     let sx = p.x - camera.x;
-    if (sx > W || sx + p.w < 0) continue;
-    ctx.fillStyle = p.c;
-    ctx.fillRect(sx, p.y, p.w, p.h);
+    if (sx > W || sx+p.w < 0) continue;
+    ctx.fillStyle = p.c; ctx.fillRect(sx, p.y, p.w, p.h);
     ctx.fillStyle = p.c === '#4a8c3f' ? '#5cb85c' : '#d4956a';
     ctx.fillRect(sx, p.y, p.w, 6);
     if (p.c === '#4a8c3f') {
@@ -310,36 +489,74 @@ function drawPlatforms() {
 function drawPlayer() {
   let sx = player.x - camera.x;
   ctx.save();
-  if (player.dir < 0) { ctx.translate(sx + player.w/2, 0); ctx.scale(-1,1); ctx.translate(-player.w/2, 0); sx = 0; }
-  // Cos
-  ctx.fillStyle = '#e8a020';
-  ctx.fillRect(sx+2, player.y+14, player.w-4, player.h-14);
-  // Cap
-  ctx.fillStyle = '#cc3300';
-  ctx.beginPath(); ctx.ellipse(sx+player.w/2, player.y+10, 15, 13, 0, 0, Math.PI*2); ctx.fill();
-  // Cara
-  ctx.fillStyle = '#f5c49a';
-  ctx.fillRect(sx+4, player.y+10, player.w-8, 14);
-  // Ulls
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(sx+14, player.y+12, 8, 6);
-  ctx.fillStyle = '#111';
-  ctx.fillRect(sx+16, player.y+13, 4, 4);
-  // Bigoti
-  ctx.fillStyle = '#8B4513';
-  ctx.fillRect(sx+5, player.y+19, 14, 3);
-  // Gorra visera
-  ctx.fillStyle = '#cc3300';
-  ctx.fillRect(sx+1, player.y+9, player.w-2, 5);
-  ctx.fillRect(sx+player.w-4, player.y+10, 6, 4);
-  // Cames
-  ctx.fillStyle = '#3355aa';
+  if (player.dir < 0) { ctx.translate(sx+player.w/2,0); ctx.scale(-1,1); ctx.translate(-player.w/2,0); sx=0; }
+  ctx.fillStyle='#e8a020'; ctx.fillRect(sx+2, player.y+14, player.w-4, player.h-14);
+  ctx.fillStyle='#cc3300'; ctx.beginPath(); ctx.ellipse(sx+player.w/2, player.y+10, 15, 13, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle='#f5c49a'; ctx.fillRect(sx+4, player.y+10, player.w-8, 14);
+  ctx.fillStyle='#fff'; ctx.fillRect(sx+14, player.y+12, 8, 6);
+  ctx.fillStyle='#111'; ctx.fillRect(sx+16, player.y+13, 4, 4);
+  ctx.fillStyle='#8B4513'; ctx.fillRect(sx+5, player.y+19, 14, 3);
+  ctx.fillStyle='#cc3300'; ctx.fillRect(sx+1, player.y+9, player.w-2, 5); ctx.fillRect(sx+player.w-4, player.y+10, 6, 4);
+  ctx.fillStyle='#3355aa';
   let legOff = Math.sin(Date.now()/80) * (Math.abs(player.vx) > 0.3 ? 4 : 0);
   ctx.fillRect(sx+2, player.y+player.h-12, 10, 12+legOff);
   ctx.fillRect(sx+player.w-12, player.y+player.h-12, 10, 12-legOff);
-  ctx.fillStyle = '#222';
-  ctx.fillRect(sx+1, player.y+player.h-2, 12, 4);
-  ctx.fillRect(sx+player.w-13, player.y+player.h-2, 12, 4);
+  ctx.fillStyle='#222'; ctx.fillRect(sx+1, player.y+player.h-2, 12, 4); ctx.fillRect(sx+player.w-13, player.y+player.h-2, 12, 4);
+  ctx.restore();
+}
+
+function drawGoomba(e) {
+  let sx = e.x - camera.x;
+  let face = e.vx < 0 ? -1 : 1;
+  ctx.save();
+  if (face < 0) { ctx.translate(sx+e.w/2,0); ctx.scale(-1,1); ctx.translate(-e.w/2,0); sx=0; }
+  ctx.fillStyle='#8B4513';
+  ctx.beginPath(); ctx.ellipse(sx+e.w/2, e.y+e.h*0.55, e.w/2-1, e.h*0.45, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle='#a0522d';
+  ctx.beginPath(); ctx.ellipse(sx+e.w/2, e.y+e.h*0.35, e.w/2-1, e.h*0.38, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle='#fff'; ctx.fillRect(sx+4, e.y+8, 7, 6); ctx.fillRect(sx+e.w-11, e.y+8, 7, 6);
+  ctx.fillStyle='#111'; ctx.fillRect(sx+5, e.y+9, 4, 4); ctx.fillRect(sx+e.w-10, e.y+9, 4, 4);
+  ctx.fillStyle='#cc3300'; ctx.fillRect(sx+8, e.y+e.h-10, 14, 10);
+  ctx.restore();
+}
+
+function drawKoopa(e) {
+  let sx = e.x - camera.x;
+  let face = e.vx < 0 ? -1 : 1;
+  ctx.save();
+  if (face < 0) { ctx.translate(sx+e.w/2,0); ctx.scale(-1,1); ctx.translate(-e.w/2,0); sx=0; }
+  ctx.fillStyle='#2d7a2d';
+  ctx.beginPath(); ctx.ellipse(sx+e.w/2, e.y+e.h*0.5, e.w/2-2, e.h*0.42, 0, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#facc15'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.ellipse(sx+e.w/2, e.y+e.h*0.5, e.w/2-5, e.h*0.3, 0, 0, Math.PI*2); ctx.stroke();
+  ctx.fillStyle='#6aaf3a';
+  ctx.beginPath(); ctx.ellipse(sx+e.w/2+4, e.y+e.h*0.22, 10, 10, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle='#fff'; ctx.fillRect(sx+e.w/2+2, e.y+5, 8, 6);
+  ctx.fillStyle='#111'; ctx.fillRect(sx+e.w/2+5, e.y+6, 4, 4);
+  ctx.fillStyle='#6aaf3a';
+  ctx.fillRect(sx+2, e.y+e.h-8, 8, 8); ctx.fillRect(sx+e.w-10, e.y+e.h-8, 8, 8);
+  ctx.restore();
+}
+
+function drawSpiny(e) {
+  let sx = e.x - camera.x;
+  let face = e.vx < 0 ? -1 : 1;
+  ctx.save();
+  if (face < 0) { ctx.translate(sx+e.w/2,0); ctx.scale(-1,1); ctx.translate(-e.w/2,0); sx=0; }
+  ctx.fillStyle='#cc2222';
+  ctx.beginPath(); ctx.ellipse(sx+e.w/2, e.y+e.h*0.58, e.w/2-2, e.h*0.38, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle='#ff6666';
+  for (let i = 0; i < 6; i++) {
+    let angle = (i / 6) * Math.PI * 2;
+    let bx = sx+e.w/2 + Math.cos(angle)*11, by = e.y+e.h*0.58 + Math.sin(angle)*9;
+    ctx.beginPath(); ctx.arc(bx, by, 3.5, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.fillStyle='#aa1111';
+  ctx.beginPath(); ctx.ellipse(sx+e.w/2, e.y+e.h*0.28, 9, 9, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle='#facc15'; ctx.fillRect(sx+e.w/2-7, e.y+4, 5, 5); ctx.fillRect(sx+e.w/2+2, e.y+4, 5, 5);
+  ctx.fillStyle='#111'; ctx.fillRect(sx+e.w/2-6, e.y+5, 3, 3); ctx.fillRect(sx+e.w/2+3, e.y+5, 3, 3);
+  ctx.fillStyle='#fff'; ctx.font='bold 10px monospace';
+  ctx.fillText('!', sx+e.w/2-2, e.y-1);
   ctx.restore();
 }
 
@@ -348,22 +565,9 @@ function drawEnemies() {
     if (!e.alive) continue;
     let sx = e.x - camera.x;
     if (sx > W || sx+e.w < 0) continue;
-    let face = e.vx < 0 ? -1 : 1;
-    ctx.save();
-    if (face < 0) { ctx.translate(sx+e.w/2, 0); ctx.scale(-1,1); ctx.translate(-e.w/2, 0); sx = 0; }
-    ctx.fillStyle = '#8B4513';
-    ctx.beginPath(); ctx.ellipse(sx+e.w/2, e.y+e.h*0.55, e.w/2-1, e.h*0.45, 0, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#a0522d';
-    ctx.beginPath(); ctx.ellipse(sx+e.w/2, e.y+e.h*0.35, e.w/2-1, e.h*0.38, 0, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(sx+4, e.y+8, 7, 6);
-    ctx.fillRect(sx+e.w-11, e.y+8, 7, 6);
-    ctx.fillStyle = '#111';
-    ctx.fillRect(sx+5, e.y+9, 4, 4);
-    ctx.fillRect(sx+e.w-10, e.y+9, 4, 4);
-    ctx.fillStyle = '#cc3300';
-    ctx.fillRect(sx+8, e.y+e.h-10, 14, 10);
-    ctx.restore();
+    if (e.type === 'koopa') drawKoopa(e);
+    else if (e.type === 'spiny') drawSpiny(e);
+    else drawGoomba(e);
   }
 }
 
@@ -372,58 +576,43 @@ function drawCoins() {
     if (c.collected) continue;
     let sx = c.x - camera.x;
     if (sx < -20 || sx > W+20) continue;
-    let bobY = c.y + Math.sin(c.anim) * 3;
-    ctx.fillStyle = '#facc15';
-    ctx.beginPath(); ctx.arc(sx, bobY, c.r, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#e6b800';
-    ctx.beginPath(); ctx.arc(sx, bobY, c.r-2, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#fff7c0';
-    ctx.fillRect(sx-1, bobY-c.r+2, 3, 4);
+    let by = c.y + Math.sin(c.anim) * 3;
+    ctx.fillStyle='#facc15'; ctx.beginPath(); ctx.arc(sx, by, c.r, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='#e6b800'; ctx.beginPath(); ctx.arc(sx, by, c.r-2, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='#fff7c0'; ctx.fillRect(sx-1, by-c.r+2, 3, 4);
   }
 }
 
 function drawGoal() {
   let sx = goal.x - camera.x;
-  if (sx < -60 || sx > W+60) return;
-  ctx.fillStyle = '#888';
-  ctx.fillRect(sx, goal.y, 6, goal.h);
-  ctx.fillStyle = '#e8a020';
-  ctx.beginPath();
-  ctx.moveTo(sx+6, goal.y);
-  ctx.lineTo(sx+6+50, goal.y+20);
-  ctx.lineTo(sx+6, goal.y+40);
-  ctx.closePath(); ctx.fill();
-  ctx.fillStyle = '#cc3300';
-  ctx.fillRect(sx+6, goal.y, 50, 8);
-  ctx.fillRect(sx+6, goal.y+16, 50, 8);
-  ctx.fillRect(sx+6, goal.y+32, 50, 8);
+  if (sx < -80 || sx > W+80) return;
+  ctx.fillStyle='#888'; ctx.fillRect(sx, goal.y, 6, goal.h);
+  ctx.fillStyle='#e8a020';
+  ctx.beginPath(); ctx.moveTo(sx+6, goal.y); ctx.lineTo(sx+56, goal.y+20); ctx.lineTo(sx+6, goal.y+40); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#cc3300'; ctx.fillRect(sx+6, goal.y, 50, 8); ctx.fillRect(sx+6, goal.y+16, 50, 8); ctx.fillRect(sx+6, goal.y+32, 50, 8);
 }
 
 function drawParticles() {
   for (let p of particles) {
-    ctx.globalAlpha = p.life;
-    ctx.fillStyle = p.color;
-    ctx.beginPath(); ctx.arc(p.x - camera.x, p.y, 4, 0, Math.PI*2); ctx.fill();
+    // Culling: no dibuixar partícules fora del viewport
+    let sx = p.x - camera.x;
+    if (sx < -20 || sx > W + 20) continue;
+    ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(sx, p.y, 4, 0, Math.PI*2); ctx.fill();
   }
   ctx.globalAlpha = 1;
 }
 
+// ─── BUCLE PRINCIPAL ─────────────────────────────────────────────────────────
 function loop() {
   if (gameState !== 'playing') return;
   ctx.clearRect(0, 0, W, H);
-  drawBackground();
-  updateCamera();
-  updateParticles();
-  drawPlatforms();
-  drawGoal();
-  drawCoins();
-  drawEnemies();
-  updatePlayer();
-  updateEnemies();
-  updateCoins();
-  checkGoal();
-  drawPlayer();
-  drawParticles();
+  drawBg(); updateCamera(); updateParticles();
+  drawPlatforms(); drawGoal(); drawCoins(); drawEnemies();
+  updatePlayer(); updateEnemies(); updateCoins(); checkGoal();
+  drawPlayer(); drawParticles();
   raf = requestAnimationFrame(loop);
 }
 </script>
+</body>
+</html>
