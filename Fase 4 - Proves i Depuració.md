@@ -18,6 +18,8 @@ Prémer tecla A i després tecla D.
 El jugador es mou correctament en les dues direccions.
 
 ---
+![Pantalla inicial](CapturesIDE/moviment_ad.png)
+
 
 ## Prova 2 — Salt del jugador
 
@@ -34,6 +36,7 @@ El jugador puja i posteriorment baixa aplicant gravetat.
 El salt funciona correctament i el personatge torna al terra.
 
 ---
+![Pantalla inicial](CapturesIDE/salt.png)
 
 ## Prova 3 — Col·lisió amb enemics
 
@@ -50,6 +53,8 @@ La vida disminueix en 1.
 La vida disminueix correctament.
 
 ---
+![Pantalla inicial](CapturesIDE/vida.png)
+
 
 ## Prova 4 — Eliminació d’enemics
 
@@ -67,6 +72,8 @@ Saltar damunt d’un enemic.
 L’enemic desapareix i s’afegeixen punts.
 
 ---
+![Pantalla inicial](CapturesIDE/enemic.png)
+
 
 ## Prova 5 — Condició de victòria
 
@@ -83,6 +90,8 @@ El joc mostra estat "GUANYAT".
 La pantalla de victòria apareix correctament.
 
 ---
+![Pantalla inicial](CapturesIDE/guanyat.png)
+
 
 # 2. Resultats de les proves executades
 
