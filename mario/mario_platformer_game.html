@@ -13,7 +13,6 @@
     padding: 8px 12px; background: #16213e; border-radius: 8px;
     margin-bottom: 8px; font-size: 13px; color: #eee; flex-wrap: wrap; gap: 6px;
   }
-  /* ─── Barra de temps (M2) ─────────────────────── */
   #timerWrap { display: flex; align-items: center; gap: 6px; }
   #timerBarWrap {
     display: inline-block; vertical-align: middle;
@@ -47,7 +46,6 @@
   .legend { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 6px; font-size: 11px; color: #aaa; }
   .legend span { display: flex; align-items: center; gap: 4px; }
   .dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
-  /* Overlay de pausa (M1) */
   #pauseHint { font-size:11px; color:#888; text-align:center; margin-top:4px; }
 </style>
 </head>
@@ -56,7 +54,6 @@
   <div id="ui">
     <span>❤️ <span id="lives">3</span></span>
     <span>⭐ <span id="score">0</span></span>
-    <!-- M2: barra de temps -->
     <span id="timerWrap">
       ⏱ <span id="timer">130</span>s
       <span id="timerBarWrap"><span id="timerBar"></span></span>
@@ -79,7 +76,6 @@
       <button onclick="startGame()">Jugar!</button>
     </div>
   </div>
-  <!-- M1: botó de pausa als controls mòbils -->
   <div id="controls">
     <button class="cb" onpointerdown="keys.left=true" onpointerup="keys.left=false" onpointercancel="keys.left=false">◀</button>
     <button class="cb" onpointerdown="keys.jump=true;keys.jumpPressed=true" onpointerup="keys.jump=false" onpointercancel="keys.jump=false">▲ Salt</button>
@@ -94,12 +90,6 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height;
 
-// ─── ESTATS DEL JOC ──────────────────────────────────────────────────────────
-// 'menu'    → pantalla inicial
-// 'playing' → partida en curs
-// 'paused'  → partida pausada (loop i timer aturats)  [M1]
-// 'won'     → jugador ha arribat a la bandera
-// 'lost'    → vides esgotades o temps exhaurit
 let gameState = 'menu', raf, timerInterval;
 
 const keys = { left: false, right: false, jump: false, jumpPressed: false };
@@ -111,7 +101,6 @@ window.addEventListener('keydown', e => {
     keys.jump = true; keys.jumpPressed = true;
   }
   if (e.code === 'Space') e.preventDefault();
-  // M1: tecla P per pausar/reprendre
   if (e.code === 'KeyP') togglePause();
 });
 window.addEventListener('keyup', e => {
@@ -120,16 +109,14 @@ window.addEventListener('keyup', e => {
   if (e.code === 'KeyW' || e.code === 'ArrowUp' || e.code === 'Space') keys.jump = false;
 });
 
-// ─── CONSTANTS DE FÍSICA ─────────────────────────────────────────────────────
-const GRAVITY = 0.45;   // Acceleració gravitatoria per frame (píxels/frame²)
-const JUMP    = -10.0;  // Velocitat inicial del salt (negatiu = amunt)
-const SPEED   =  3.5;   // Velocitat horitzontal màxima del jugador
+const GRAVITY = 0.45;
+const JUMP    = -10.0;
+const SPEED   =  3.5;
 const LEVEL_W = 5000;
-const MAX_TIME = 130;   // Temps màxim de la partida (per calcular la barra) [M2]
+const MAX_TIME = 130;
 
 let player, enemies, platforms, coins, goal, camera, score, lives, timeLeft, particles, ekills;
 
-// ─── DADES DEL NIVELL ────────────────────────────────────────────────────────
 const platformData = [
   {x:0,    y:340, w:420, h:50, c:'#4a8c3f'},
   {x:580,  y:340, w:280, h:50, c:'#4a8c3f'},
@@ -167,10 +154,6 @@ const platformData = [
   {x:4760, y:260, w:90,  h:20, c:'#b87333'},
 ];
 
-// ─── TIPUS D'ENEMICS ─────────────────────────────────────────────────────────
-// 'goomba' → velocitat normal (1.2), es pot eliminar saltant        (+100 pts)
-// 'koopa'  → velocitat ràpida (2.2), es pot eliminar saltant        (+150 pts)
-// 'spiny'  → velocitat lenta (1.0),  NO es pot eliminar saltant (punxes!)
 const enemyData = [
   {x:100, y:315, type:'goomba'},{x:200, y:315, type:'koopa'},
   {x:610, y:315, type:'goomba'},{x:700, y:315, type:'spiny'},
@@ -202,18 +185,9 @@ const coinData = [
   {x:4820,y:308},{x:4870,y:308},{x:4920,y:308},
 ];
 
-// ─── INICIALITZACIÓ ───────────────────────────────────────────────────────────
-function initGame() {
-  player = { x:60, y:280, w:28, h:36, vx:0, vy:0, onGround:false, dir:1, jumpHeld:false };
-  camera = { x:0 };
-  score = 0; lives = 3; timeLeft = MAX_TIME; ekills = 0;
-  ['score','lives','timer','ekills'].forEach(id =>
-    document.getElementById(id).textContent = ({score:0,lives:3,timer:MAX_TIME,ekills:0})[id]
-  );
-  updateTimerBar(); // M2: reseteja la barra al 100%
-  particles = [];
-  platforms = platformData.map(p => ({...p}));
-  enemies = enemyData.map(e => {
+// ─── Crea els enemics a partir de les dades originals ─────────────────────────
+function buildEnemies() {
+  return enemyData.map(e => {
     let patrolMin = e.x - 60, patrolMax = e.x + 60;
     for (let p of platforms) {
       let footY = e.y + 28;
@@ -224,11 +198,28 @@ function initGame() {
     const speeds = { goomba: 1.2, koopa: 2.2, spiny: 1.0 };
     return { x:e.x, y:e.y, w:30, h:28, vx: speeds[e.type]||1.2, alive:true, onGround:false, vy:0, patrolMin, patrolMax, type: e.type };
   });
-  coins = coinData.map(c => ({ x:c.x, y:c.y, r:8, collected:false, anim:Math.random()*Math.PI*2 }));
+}
+
+// ─── Crea les monedes a partir de les dades originals ─────────────────────────
+function buildCoins() {
+  return coinData.map(c => ({ x:c.x, y:c.y, r:8, collected:false, anim:Math.random()*Math.PI*2 }));
+}
+
+function initGame() {
+  player = { x:60, y:280, w:28, h:36, vx:0, vy:0, onGround:false, dir:1, jumpHeld:false };
+  camera = { x:0 };
+  score = 0; lives = 3; timeLeft = MAX_TIME; ekills = 0;
+  ['score','lives','timer','ekills'].forEach(id =>
+    document.getElementById(id).textContent = ({score:0,lives:3,timer:MAX_TIME,ekills:0})[id]
+  );
+  updateTimerBar();
+  particles = [];
+  platforms = platformData.map(p => ({...p}));
+  enemies = buildEnemies();
+  coins = buildCoins();
   goal = { x:LEVEL_W - 110, y:150, w:30, h:190 };
 }
 
-// ─── M1: SISTEMA DE PAUSA ─────────────────────────────────────────────────────
 function togglePause() {
   if (gameState === 'playing') {
     gameState = 'paused';
@@ -245,7 +236,6 @@ function togglePause() {
 }
 
 function drawPauseOverlay() {
-  // Dibuixar sobre l'estat actual del canvas (no esborrem)
   ctx.fillStyle = 'rgba(0,0,0,0.62)';
   ctx.fillRect(0, 0, W, H);
   ctx.fillStyle = '#facc15';
@@ -258,14 +248,13 @@ function drawPauseOverlay() {
   ctx.textAlign = 'left';
 }
 
-// ─── M2: BARRA DE TEMPS ───────────────────────────────────────────────────────
 function updateTimerBar() {
   const pct = Math.max(0, timeLeft / MAX_TIME) * 100;
   const bar = document.getElementById('timerBar');
   bar.style.width = pct + '%';
-  if (pct > 50)      bar.style.background = '#4caf50'; // verd
-  else if (pct > 25) bar.style.background = '#facc15'; // groc
-  else               bar.style.background = '#e24b4a'; // vermell
+  if (pct > 50)      bar.style.background = '#4caf50';
+  else if (pct > 25) bar.style.background = '#facc15';
+  else               bar.style.background = '#e24b4a';
 }
 
 function startTimer() {
@@ -274,12 +263,11 @@ function startTimer() {
     if (gameState !== 'playing') return;
     timeLeft--;
     document.getElementById('timer').textContent = timeLeft;
-    updateTimerBar(); // M2: actualitza la barra cada segon
+    updateTimerBar();
     if (timeLeft <= 0) endGame(false);
   }, 1000);
 }
 
-// ─── INICI / FI DE JOC ───────────────────────────────────────────────────────
 function startGame() {
   document.getElementById('overlay').style.display = 'none';
   document.getElementById('btnPause').textContent = '⏸ Pausa';
@@ -290,7 +278,6 @@ function startGame() {
   loop();
 }
 
-// M3: etiqueta de rendiment per a la pantalla final
 function getPerformanceLabel(s, kills, won) {
   if (!won) return '💪 Millora la teva estratègia i torna-ho a intentar!';
   if (s >= 600 && kills >= 10) return '🌟 Perfecte! Ets un crack!';
@@ -298,7 +285,6 @@ function getPerformanceLabel(s, kills, won) {
   return '😅 Ho pots fer millor, torna-ho a intentar!';
 }
 
-// M3: animació del comptador de puntuació final
 function animateScore(targetScore, color) {
   let displayed = 0;
   const step = Math.max(1, Math.floor(targetScore / 40));
@@ -324,7 +310,6 @@ function endGame(won) {
   const perf   = getPerformanceLabel(score, ekills, won);
   const killables = enemyData.filter(e => e.type !== 'spiny').length;
 
-  // M3: puntuació com a element animat + missatge de rendiment
   ov.innerHTML = `
     <h2 style="color:${accent};margin:0 0 4px">${emoji} ${title}</h2>
     <p id="scoreAnim" style="font-size:30px;font-weight:bold;color:${accent};margin:0 0 8px">⭐ 0</p>
@@ -336,16 +321,14 @@ function endGame(won) {
     </p>
     <button onclick="startGame()">Tornar a jugar</button>`;
 
-  animateScore(score, accent); // M3: anima el comptador
+  animateScore(score, accent);
 }
 
-// ─── PARTÍCULES ───────────────────────────────────────────────────────────────
 function spawnParticles(x, y, color, n) {
   for (let i = 0; i < n; i++)
     particles.push({ x, y, vx:(Math.random()-0.5)*4, vy:-Math.random()*4-1, life:1, color });
 }
 
-// ─── COL·LISIONS ──────────────────────────────────────────────────────────────
 function aabb(a, b) {
   return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y;
 }
@@ -367,7 +350,6 @@ function resolvePlayerPlatforms() {
   }
 }
 
-// ─── ACTUALITZACIÓ DEL JUGADOR ────────────────────────────────────────────────
 function updatePlayer() {
   if (keys.left)  { player.vx -= 0.8; player.dir = -1; }
   else if (keys.right) { player.vx += 0.8; player.dir = 1; }
@@ -378,7 +360,7 @@ function updatePlayer() {
   }
   keys.jumpPressed = false;
   if (!keys.jump) player.jumpHeld = false;
-  if (player.jumpHeld && player.vy < -2) player.vy -= 0.15; // boost prolongat (reduït per salt més controlat)
+  if (player.jumpHeld && player.vy < -2) player.vy -= 0.15;
   player.vy += GRAVITY;
   player.vy = Math.min(player.vy, 15);
   player.x += player.vx;
@@ -389,15 +371,32 @@ function updatePlayer() {
   if (player.y > H + 100) loseLife();
 }
 
+// ─── PERDRE UNA VIDA: reinicia jugador + enemics + monedes (com al Mario) ─────
 function loseLife() {
   lives--;
   document.getElementById('lives').textContent = lives;
   spawnParticles(player.x+player.w/2, player.y+player.h/2, '#e24b4a', 12);
-  if (lives <= 0) endGame(false);
-  else { player.x = 60; player.y = 280; player.vx = 0; player.vy = 0; camera.x = 0; }
+
+  if (lives <= 0) {
+    endGame(false);
+    return;
+  }
+
+  // Reinicia posició del jugador i càmera
+  player.x = 60; player.y = 280; player.vx = 0; player.vy = 0;
+  player.onGround = false; player.jumpHeld = false;
+  camera.x = 0;
+
+  // Reinicia tots els enemics a la posició i estat originals
+  enemies = buildEnemies();
+
+  // Reinicia totes les monedes (les recollides tornen a aparèixer)
+  coins = buildCoins();
+
+  // Netejar partícules per evitar confusió visual
+  particles = [];
 }
 
-// ─── ACTUALITZACIÓ ENEMICS ────────────────────────────────────────────────────
 function updateEnemies() {
   for (let e of enemies) {
     if (!e.alive) continue;
@@ -458,7 +457,6 @@ function updateParticles() {
   particles = particles.filter(p => p.life > 0);
 }
 
-// ─── DIBUIX ───────────────────────────────────────────────────────────────────
 function drawBg() {
   ctx.fillStyle = '#87ceeb'; ctx.fillRect(0,0,W,H);
   ctx.fillStyle = 'rgba(255,255,255,0.65)';
@@ -594,7 +592,6 @@ function drawGoal() {
 
 function drawParticles() {
   for (let p of particles) {
-    // Culling: no dibuixar partícules fora del viewport
     let sx = p.x - camera.x;
     if (sx < -20 || sx > W + 20) continue;
     ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
@@ -603,7 +600,6 @@ function drawParticles() {
   ctx.globalAlpha = 1;
 }
 
-// ─── BUCLE PRINCIPAL ─────────────────────────────────────────────────────────
 function loop() {
   if (gameState !== 'playing') return;
   ctx.clearRect(0, 0, W, H);
