@@ -68,7 +68,7 @@
     <div id="overlay">
       <h2>🍄 Plataformes v3</h2>
       <p>Arriba a la bandera! Salta sobre els enemics per eliminar-los.<br>
-      <strong>Nou:</strong> Salt mes alt! Forats mes grans, 3 tipus d'enemics.<br><br>
+      <strong>Nou:</strong> Salt ajustat! 3 tipus d'enemics i nivells desafiants.<br><br>
       A/D o ←/→ per moure · W/↑/Espai per saltar · <strong>P per pausar</strong></p>
       <div class="legend">
         <span><span class="dot" style="background:#8B4513"></span>Goomba (normal)</span>
@@ -122,7 +122,7 @@ window.addEventListener('keyup', e => {
 
 // ─── CONSTANTS DE FÍSICA ─────────────────────────────────────────────────────
 const GRAVITY = 0.45;   // Acceleració gravitatoria per frame (píxels/frame²)
-const JUMP    = -13.0;  // Velocitat inicial del salt (negatiu = amunt)
+const JUMP    = -10.0;  // Velocitat inicial del salt (negatiu = amunt)
 const SPEED   =  3.5;   // Velocitat horitzontal màxima del jugador
 const LEVEL_W = 5000;
 const MAX_TIME = 130;   // Temps màxim de la partida (per calcular la barra) [M2]
@@ -378,7 +378,7 @@ function updatePlayer() {
   }
   keys.jumpPressed = false;
   if (!keys.jump) player.jumpHeld = false;
-  if (player.jumpHeld && player.vy < -2) player.vy -= 0.3; // boost prolongat
+  if (player.jumpHeld && player.vy < -2) player.vy -= 0.15; // boost prolongat (reduït per salt més controlat)
   player.vy += GRAVITY;
   player.vy = Math.min(player.vy, 15);
   player.x += player.vx;
